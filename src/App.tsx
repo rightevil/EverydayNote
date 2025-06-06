@@ -462,6 +462,7 @@ function App() {
 
   useEffect(() => {
     const handler = (e: Event) => {
+      console.log('beforeinstallprompt event fired');
       // 阻止 Chrome 67 及更早版本自动显示安装提示
       e.preventDefault();
       // 保存事件，以便稍后触发
@@ -469,6 +470,19 @@ function App() {
       // 显示我们的自定义安装提示
       setShowInstallPrompt(true);
     };
+
+    // 检查是否已经安装
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      console.log('App is already installed');
+      return;
+    }
+
+    // 检查是否支持 PWA
+    if ('serviceWorker' in navigator) {
+      console.log('Service Worker is supported');
+    } else {
+      console.log('Service Worker is not supported');
+    }
 
     window.addEventListener('beforeinstallprompt', handler);
 
@@ -478,18 +492,25 @@ function App() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      console.log('No deferred prompt available');
+      return;
+    }
 
-    // 显示安装提示
-    deferredPrompt.prompt();
+    try {
+      // 显示安装提示
+      deferredPrompt.prompt();
 
-    // 等待用户响应
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
+      // 等待用户响应
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
 
-    // 无论用户是否安装，都清除提示
-    setDeferredPrompt(null);
-    setShowInstallPrompt(false);
+      // 无论用户是否安装，都清除提示
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+    } catch (error) {
+      console.error('Error during installation:', error);
+    }
   };
 
   const tabs = [
