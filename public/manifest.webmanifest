@@ -1,0 +1,9 @@
+{
+  "name": "每日一句",
+  "short_name": "每日一句",
+  "description": "记录每天的心情和想法",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1677ff"
+} 
