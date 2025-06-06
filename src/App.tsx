@@ -573,7 +573,7 @@ function Profile() {
           <span style={{ color: '#666' }}>已记录天数：</span>
           <span style={{ fontWeight: 'bold' }}>{stats.totalDays} 天</span>
         </div>
-        <div>
+      <div>
           <span style={{ color: '#666' }}>搭档状态：</span>
           <span style={{ fontWeight: 'bold' }}>
             {stats.isBound ? `已绑定 (${stats.partnerId})` : '未绑定'}
@@ -645,7 +645,6 @@ function BottomNav({ activeKey, onChange }: BottomNavProps) {
 
 function App() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [activeKey, setActiveKey] = useState('/');
 
   useEffect(() => {

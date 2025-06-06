@@ -1,22 +1,22 @@
 import axios from 'axios';
 import type { AxiosResponse } from 'axios';
 
-// 定义响应类型
-interface ApiResponse<T = any> {
+export interface ApiResponse<T = any> {
+  code: number;
   data: T;
-  token?: string;
+  message: string;
 }
 
-// 创建axios实例
-const api = axios.create({
+// 创建 axios 实例
+const instance = axios.create({
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// 请求拦截器：添加token
-api.interceptors.request.use(
+// 请求拦截器
+instance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -24,19 +24,23 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// 响应拦截器：处理错误
-api.interceptors.response.use(
-  (response: AxiosResponse) => response.data as ApiResponse,
+// 响应拦截器
+instance.interceptors.response.use(
+  (response: AxiosResponse<ApiResponse>) => {
+    const data = response.data;
+    if (data.code !== 0) {
+      return Promise.reject(new Error(data.message));
+    }
+    return response;
+  },
   (error) => {
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          // 未授权，清除token
+          // 未授权，清除 token 并跳转到登录页
           localStorage.removeItem('token');
           break;
         case 403:
@@ -46,7 +50,6 @@ api.interceptors.response.use(
           // 资源不存在
           break;
         default:
-          // 其他错误
           break;
       }
     }
@@ -54,112 +57,101 @@ api.interceptors.response.use(
   }
 );
 
-// 定义任务类型
-type ApiTask = {
-  type: keyof typeof apiService;
-  args: unknown[];
-};
-
-// API接口
+// API 服务
 export const apiService = {
-  // 设置服务端地址
   setServerUrl(url: string) {
-    api.defaults.baseURL = url;
+    instance.defaults.baseURL = url;
   },
 
-  // 用户认证
   async login(userId: string): Promise<ApiResponse> {
-    const response = await api.post<ApiResponse>('/auth/login', { userId });
-    const data = response as unknown as ApiResponse;
-    if (data.token) {
-      localStorage.setItem('token', data.token);
-    }
-    return data;
+    const response = await instance.post<ApiResponse>('/api/login', { userId });
+    return response.data;
   },
 
-  // 同步数据
   async syncData(notes: any[]): Promise<ApiResponse> {
-    return await api.post<ApiResponse>('/sync/data', { notes });
+    const response = await instance.post<ApiResponse>('/api/sync', { notes });
+    return response.data;
   },
 
-  // 获取同步数据
   async getSyncData(startDate: string, endDate: string): Promise<ApiResponse> {
-    return await api.get<ApiResponse>('/sync/data', {
-      params: { startDate, endDate }
-    });
+    const response = await instance.get<ApiResponse>(`/api/sync?startDate=${startDate}&endDate=${endDate}`);
+    return response.data;
   },
 
-  // 发送搭档绑定请求
   async sendPartnerRequest(partnerId: string): Promise<ApiResponse> {
-    return await api.post<ApiResponse>('/partner/request', { partnerId });
+    const response = await instance.post<ApiResponse>('/api/partner/request', { partnerId });
+    return response.data;
   },
 
-  // 接受搭档绑定请求
   async acceptPartnerRequest(requestId: string): Promise<ApiResponse> {
-    return await api.post<ApiResponse>('/partner/accept', { requestId });
+    const response = await instance.post<ApiResponse>(`/api/partner/accept/${requestId}`);
+    return response.data;
   },
 
-  // 获取搭档数据
   async getPartnerData(startDate: string, endDate: string): Promise<ApiResponse> {
-    return await api.get<ApiResponse>('/partner/data', {
-      params: { startDate, endDate }
-    });
+    const response = await instance.get<ApiResponse>(`/api/partner/data?startDate=${startDate}&endDate=${endDate}`);
+    return response.data;
   },
 
-  // 上传媒体文件
   async uploadMedia(file: File): Promise<ApiResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    return await api.post<ApiResponse>('/media/upload', formData, {
+    const response = await instance.post<ApiResponse>('/api/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
   },
 };
 
 // 离线队列管理
-export const offlineQueue = {
-  queue: [] as ApiTask[],
-  
-  // 添加任务到队列
-  addTask(task: ApiTask) {
+type ApiMethod = typeof apiService[keyof typeof apiService];
+type ApiMethodArgs<T extends ApiMethod> = T extends (...args: infer A) => any ? A : never;
+
+interface ApiTask {
+  method: keyof typeof apiService;
+  args: any[];
+}
+
+class OfflineQueue {
+  private queue: ApiTask[] = [];
+
+  async addTask(task: ApiTask) {
     this.queue.push(task);
-    this.saveQueue();
-  },
+    await this.saveQueue();
+  }
 
-  // 保存队列到本地存储
-  saveQueue() {
+  private async saveQueue() {
     localStorage.setItem('offlineQueue', JSON.stringify(this.queue));
-  },
+  }
 
-  // 从本地存储加载队列
-  loadQueue() {
-    const saved = localStorage.getItem('offlineQueue');
-    if (saved) {
-      this.queue = JSON.parse(saved);
+  async loadQueue() {
+    const queue = localStorage.getItem('offlineQueue');
+    if (queue) {
+      this.queue = JSON.parse(queue);
     }
-  },
+  }
 
-  // 处理队列中的任务
   async processQueue() {
-    if (this.queue.length === 0) return;
-
-    for (const task of this.queue) {
-      try {
-        const method = apiService[task.type];
-        if (typeof method === 'function') {
-          await method.apply(apiService, task.args);
-          this.queue = this.queue.filter(t => t !== task);
-          this.saveQueue();
+    await this.loadQueue();
+    while (this.queue.length > 0) {
+      const task = this.queue.shift();
+      if (task) {
+        try {
+          const method = apiService[task.method];
+          if (typeof method === 'function') {
+            await (method as Function).apply(apiService, task.args);
+          }
+        } catch (error) {
+          console.error('处理离线任务失败:', error);
+          this.queue.unshift(task);
+          break;
         }
-      } catch (error) {
-        console.error('Failed to process offline task:', error);
-        break;
       }
     }
-  },
-};
+    await this.saveQueue();
+  }
+}
 
-// 初始化：加载离线队列
-offlineQueue.loadQueue(); 
+export const offlineQueue = new OfflineQueue(); 
