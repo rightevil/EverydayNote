@@ -1,54 +1,59 @@
-# React + TypeScript + Vite
+# EverydayNote
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 项目描述
+一个基于 PWA 技术的跨平台应用，可以在安卓和 iOS 上运行。
 
-Currently, two official plugins are available:
+### 主要功能
+1. **每日记录**
+   - 记录每天的一句话
+   - 支持文字、emoji、照片和视频
+   - 离线可用
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+2. **数据同步**
+   - 向远程服务端同步最近一周的数据
+   - 可配置同步时间范围
+   - 可设置服务端地址
 
-## Expanding the ESLint configuration
+3. **搭档功能**
+   - 与指定 ID 的搭档绑定
+   - 双向数据同步
+   - 时间轴展示
+   - 显示搭档信息和绑定天数
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+4. **个人中心**
+   - 显示用户头像和 ID
+   - 个人信息管理
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### 技术栈
+- PWA (Progressive Web App)
+- React
+- TypeScript
+- Vite
+- Antd Mobile
+- IndexedDB (离线存储)
+
+### 开发环境要求
+- Node.js >= 18.0.0
+- npm >= 8.0.0
+
+### 安装和运行
+```bash
+# 安装依赖
+npm install
+
+# 开发环境运行
+npm run dev
+
+# 构建生产版本
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 离线功能
+- 应用支持完全离线使用
+- 仅在同步时需要网络连接
+- 使用 IndexedDB 进行本地数据存储
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+### 服务端要求
+- 支持 Linux 或 Windows 系统
+- 负责数据同步和分发
+- 处理搭档绑定请求
