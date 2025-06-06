@@ -1,9 +1,9 @@
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { TabBar, Button, Input, Toast, Image, Space, DotLoading, PullToRefresh } from 'antd-mobile';
-import { AppOutline, SendOutline, TeamOutline, UserOutline, SmileOutline, PictureOutline, VideoOutline } from 'antd-mobile-icons';
+import { TabBar, Button, Input, Toast, Image, Space, PullToRefresh } from 'antd-mobile';
+import { AppOutline, SendOutline, TeamOutline, PictureOutline } from 'antd-mobile-icons';
 import { useEffect, useState, useRef } from 'react';
 import { openDB } from 'idb';
-import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import './App.css';
 import { syncService } from './services/sync';
 import { apiService } from './api';
@@ -301,12 +301,11 @@ function Sync() {
 }
 
 function Partner() {
-  const [partnerId, setPartnerId] = useState('');
+  const [partnerId, setPartnerId] = useState(localStorage.getItem('partnerId') || '');
   const [isBound, setIsBound] = useState(false);
   const [bindingDays, setBindingDays] = useState(0);
   const [myNotes, setMyNotes] = useState<any[]>([]);
   const [partnerNotes, setPartnerNotes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
 
   // 模拟获取绑定状态
   useEffect(() => {
@@ -337,111 +336,116 @@ function Partner() {
       if (isBound) {
         setPartnerNotes(filteredNotes.map(note => ({
           ...note,
-          text: `搭档的${note.text}`,
-          emoji: '👥'
+          text: note.text + ' (搭档)'
         })));
       }
     };
     fetchNotes();
   }, [isBound]);
 
-  const handleBind = async () => {
-    if (!partnerId) {
-      Toast.show({ icon: 'fail', content: '请输入搭档ID' });
-      return;
-    }
-    setLoading(true);
-    try {
-      // TODO: 实际应向服务端发送绑定请求
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      localStorage.setItem('partnerId', partnerId);
-      setIsBound(true);
-      setBindingDays(1);
-      Toast.show({ icon: 'success', content: '绑定请求已发送' });
-    } catch (error) {
-      Toast.show({ icon: 'fail', content: '绑定失败' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div style={{ padding: 16 }}>
+      <h3>搭档</h3>
       {!isBound ? (
         <div>
-          <h3>绑定搭档</h3>
-          <div style={{ marginBottom: 16 }}>
-            <Input
-              placeholder="请输入搭档ID"
-              value={partnerId}
-              onChange={val => setPartnerId(val)}
-              clearable
-            />
-          </div>
+          <Input
+            placeholder="请输入搭档ID"
+            value={partnerId}
+            onChange={val => setPartnerId(val)}
+            clearable
+          />
           <Button
             color="primary"
             block
-            loading={loading}
-            onClick={handleBind}
-            disabled={!partnerId}
+            style={{ marginTop: 16 }}
+            onClick={() => {
+              localStorage.setItem('partnerId', partnerId);
+              setIsBound(true);
+              setBindingDays(7);
+            }}
           >
-            发送绑定请求
+            绑定
           </Button>
         </div>
       ) : (
         <div>
-          <div style={{ marginBottom: 16, textAlign: 'center' }}>
-            <h3>已绑定搭档</h3>
-            <div style={{ color: '#666' }}>ID: {partnerId}</div>
-            <div style={{ color: '#666' }}>已绑定 {bindingDays} 天</div>
+          <div style={{ marginBottom: 16 }}>
+            <div>已绑定搭档：{partnerId}</div>
+            <div>绑定天数：{bindingDays}天</div>
           </div>
-          <div style={{ display: 'flex', gap: 16 }}>
-            {/* 左侧：我的数据 */}
-            <div style={{ flex: 1 }}>
-              <h4>我的记录</h4>
-              {myNotes.map(note => (
-                <div key={note.date} style={{ marginBottom: 12, padding: 8, background: '#f7f8fa', borderRadius: 8 }}>
-                  <div style={{ fontSize: 12, color: '#666' }}>{note.date}</div>
-                  <div>{note.text} {note.emoji}</div>
-                  {note.media && note.media.length > 0 && (
-                    <div style={{ marginTop: 4 }}>
-                      {note.media.map((m: any, idx: number) => (
-                        <span key={idx} style={{ marginRight: 4 }}>
-                          {m.type === 'image' ? (
-                            <Image src={m.url} width={32} height={32} fit="cover" style={{ borderRadius: 4 }} />
-                          ) : (
-                            <video src={m.url} width={48} height={32} style={{ borderRadius: 4 }} controls preload="metadata" />
-                          )}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            {/* 右侧：搭档数据 */}
-            <div style={{ flex: 1 }}>
-              <h4>搭档记录</h4>
-              {partnerNotes.map(note => (
-                <div key={note.date} style={{ marginBottom: 12, padding: 8, background: '#f7f8fa', borderRadius: 8 }}>
-                  <div style={{ fontSize: 12, color: '#666' }}>{note.date}</div>
-                  <div>{note.text} {note.emoji}</div>
-                  {note.media && note.media.length > 0 && (
-                    <div style={{ marginTop: 4 }}>
-                      {note.media.map((m: any, idx: number) => (
-                        <span key={idx} style={{ marginRight: 4 }}>
-                          {m.type === 'image' ? (
-                            <Image src={m.url} width={32} height={32} fit="cover" style={{ borderRadius: 4 }} />
-                          ) : (
-                            <video src={m.url} width={48} height={32} style={{ borderRadius: 4 }} controls preload="metadata" />
-                          )}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+          <div style={{ marginTop: 24 }}>
+            <h4>我的记录</h4>
+            {myNotes.map(note => (
+              <div
+                key={note.date}
+                style={{
+                  background: '#f7f8fa',
+                  borderRadius: 12,
+                  padding: 16,
+                  marginBottom: 12,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                }}
+              >
+                <div style={{ fontSize: 18, marginBottom: 8 }}>{note.text} {note.emoji}</div>
+                {note.media && note.media.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {note.media.map((m: any, idx: number) => (
+                      <div
+                        key={idx}
+                        style={{
+                          borderRadius: 8,
+                          overflow: 'hidden',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        }}
+                      >
+                        {m.type === 'image' ? (
+                          <Image src={m.url} width={80} height={80} fit="cover" />
+                        ) : (
+                          <video src={m.url} width={120} height={80} style={{ objectFit: 'cover' }} controls preload="metadata" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 24 }}>
+            <h4>搭档记录</h4>
+            {partnerNotes.map(note => (
+              <div
+                key={note.date}
+                style={{
+                  background: '#f7f8fa',
+                  borderRadius: 12,
+                  padding: 16,
+                  marginBottom: 12,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                }}
+              >
+                <div style={{ fontSize: 18, marginBottom: 8 }}>{note.text} {note.emoji}</div>
+                {note.media && note.media.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {note.media.map((m: any, idx: number) => (
+                      <div
+                        key={idx}
+                        style={{
+                          borderRadius: 8,
+                          overflow: 'hidden',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        }}
+                      >
+                        {m.type === 'image' ? (
+                          <Image src={m.url} width={80} height={80} fit="cover" />
+                        ) : (
+                          <video src={m.url} width={120} height={80} style={{ objectFit: 'cover' }} controls preload="metadata" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -449,227 +453,51 @@ function Partner() {
   );
 }
 
-function Profile() {
-  const [userId, setUserId] = useState('');
-  const [avatar, setAvatar] = useState('');
-  const [stats, setStats] = useState({
-    totalDays: 0,
-    isBound: false,
-    partnerId: '',
-  });
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // 初始化用户信息
-  useEffect(() => {
-    // 生成随机用户ID（实际应从服务端获取）
-    const storedId = localStorage.getItem('userId');
-    if (storedId) {
-      setUserId(storedId);
-    } else {
-      const newId = 'user_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('userId', newId);
-      setUserId(newId);
-    }
-
-    // 获取绑定状态
-    const partnerId = localStorage.getItem('partnerId');
-    if (partnerId) {
-      setStats(prev => ({ ...prev, isBound: true, partnerId }));
-    }
-
-    // 获取记录天数
-    const fetchStats = async () => {
-      const db = await dbPromise;
-      const notes = await db.getAll('notes');
-      setStats(prev => ({ ...prev, totalDays: notes.length }));
-    };
-    fetchStats();
-  }, []);
-
-  // 处理头像上传
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result;
-        if (typeof result === 'string') {
-          setAvatar(result);
-          // 实际应上传到服务端
-          localStorage.setItem('userAvatar', result);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // 复制用户ID
-  const copyUserId = () => {
-    navigator.clipboard.writeText(userId);
-    Toast.show({ icon: 'success', content: 'ID已复制' });
-  };
-
-  return (
-    <div style={{ padding: 16 }}>
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <div
-          style={{
-            width: 100,
-            height: 100,
-            borderRadius: '50%',
-            margin: '0 auto 16px',
-            background: avatar ? `url(${avatar}) center/cover` : '#f0f0f0',
-            position: 'relative',
-            cursor: 'pointer',
-          }}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {!avatar && (
-            <div style={{ 
-              position: 'absolute', 
-              top: '50%', 
-              left: '50%', 
-              transform: 'translate(-50%, -50%)',
-              color: '#999'
-            }}>
-              点击上传头像
-            </div>
-          )}
-        </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          style={{ display: 'none' }}
-          onChange={handleAvatarChange}
-        />
-        <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>
-          我的ID
-        </div>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          gap: 8,
-          marginBottom: 16
-        }}>
-          <span style={{ color: '#666' }}>{userId}</span>
-          <Button
-            size='small'
-            onClick={copyUserId}
-          >
-            复制
-          </Button>
-        </div>
-      </div>
-
-      <div style={{ 
-        background: '#f7f8fa', 
-        borderRadius: 8, 
-        padding: 16,
-        marginBottom: 16
-      }}>
-        <div style={{ marginBottom: 12 }}>
-          <span style={{ color: '#666' }}>已记录天数：</span>
-          <span style={{ fontWeight: 'bold' }}>{stats.totalDays} 天</span>
-        </div>
-      <div>
-          <span style={{ color: '#666' }}>搭档状态：</span>
-          <span style={{ fontWeight: 'bold' }}>
-            {stats.isBound ? `已绑定 (${stats.partnerId})` : '未绑定'}
-          </span>
-        </div>
-      </div>
-
-      <div style={{ 
-        background: '#f7f8fa', 
-        borderRadius: 8, 
-        padding: 16
-      }}>
-        <h4 style={{ marginBottom: 12 }}>使用说明</h4>
-        <div style={{ color: '#666', fontSize: 14, lineHeight: 1.6 }}>
-          <p>1. 复制你的ID，分享给想要绑定的搭档</p>
-          <p>2. 在搭档页面输入对方的ID进行绑定</p>
-          <p>3. 每天记录一句话，支持文字、表情、图片和视频</p>
-          <p>4. 在同步页面设置服务端地址，定期同步数据</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const tabs = [
-  {
-    key: '/',
-    title: '一句话',
-    icon: <AppOutline />,
-  },
-  {
-    key: '/sync',
-    title: '同步',
-    icon: <SendOutline />,
-  },
-  {
-    key: '/partner',
-    title: '搭档',
-    icon: <TeamOutline />,
-  },
-  {
-    key: '/profile',
-    title: '自己',
-    icon: <UserOutline />,
-  },
-];
-
-interface BottomNavProps {
-  activeKey: string;
-  onChange: (key: string) => void;
-}
-
-function BottomNav({ activeKey, onChange }: BottomNavProps) {
-  const navigate = useNavigate();
-  return (
-    <TabBar
-      activeKey={activeKey}
-      onChange={key => {
-        onChange(key);
-        navigate(key);
-      }}
-    >
-      {tabs.map(item => (
-        <TabBar.Item key={item.key} icon={item.icon} title={item.title} />
-      ))}
-    </TabBar>
-  );
-}
-
 function App() {
   const location = useLocation();
-  const [activeKey, setActiveKey] = useState('/');
+  const navigate = useNavigate();
+  const { pathname } = location;
 
-  useEffect(() => {
-    setActiveKey(location.pathname);
-  }, [location]);
+  const tabs = [
+    {
+      key: '/',
+      title: '记录',
+      icon: <AppOutline />,
+    },
+    {
+      key: '/sync',
+      title: '同步',
+      icon: <SendOutline />,
+    },
+    {
+      key: '/partner',
+      title: '搭档',
+      icon: <TeamOutline />,
+    },
+  ];
 
   return (
     <div className="app">
-      <TransitionGroup>
-        <CSSTransition
-          key={location.key}
-          timeout={300}
-          classNames="page"
-        >
-          <div className="page-container">
+      <div className="body">
+        <TransitionGroup>
+          <CSSTransition
+            key={pathname}
+            timeout={300}
+            classNames="fade"
+          >
             <Routes>
               <Route path="/" element={<OneSentence />} />
               <Route path="/sync" element={<Sync />} />
               <Route path="/partner" element={<Partner />} />
-              <Route path="/profile" element={<Profile />} />
             </Routes>
-          </div>
-        </CSSTransition>
-      </TransitionGroup>
-      <BottomNav activeKey={activeKey} onChange={setActiveKey} />
+          </CSSTransition>
+        </TransitionGroup>
+      </div>
+      <TabBar activeKey={pathname} onChange={value => navigate(value)}>
+        {tabs.map(item => (
+          <TabBar.Item key={item.key} icon={item.icon} title={item.title} />
+        ))}
+      </TabBar>
     </div>
   );
 }

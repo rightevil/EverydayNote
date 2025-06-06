@@ -106,10 +106,7 @@ export const apiService = {
 };
 
 // 离线队列管理
-type ApiMethod = typeof apiService[keyof typeof apiService];
-type ApiMethodArgs<T extends ApiMethod> = T extends (...args: infer A) => any ? A : never;
-
-interface ApiTask {
+export interface ApiTask {
   method: keyof typeof apiService;
   args: any[];
 }

@@ -1,4 +1,5 @@
-import { apiService, offlineQueue } from '../api';
+import { apiService } from '../api';
+import type { ApiTask } from '../api';
 import { format, subDays } from 'date-fns';
 
 // 定义笔记类型
@@ -60,11 +61,6 @@ export class SyncService {
     localStorage.setItem(`note_${note.id}`, JSON.stringify(note));
   }
 
-  // 删除本地笔记
-  private deleteNote(id: string) {
-    localStorage.removeItem(`note_${id}`);
-  }
-
   // 同步数据
   async sync(syncDays: number = 7): Promise<void> {
     if (this.syncInProgress) {
@@ -95,20 +91,15 @@ export class SyncService {
 
       // 同步到服务器
       if (localNotes.length > 0) {
-        try {
-          await apiService.syncData(localNotes);
-          // 标记本地笔记为已同步
-          localNotes.forEach(note => {
-            note.synced = true;
-            this.saveNote(note);
-          });
-        } catch (error) {
-          // 如果同步失败，将任务添加到离线队列
-          offlineQueue.addTask({
-            type: 'syncData',
-            args: [localNotes]
-          });
-        }
+        await this.processSyncTask({
+          method: 'syncData',
+          args: [localNotes]
+        });
+        // 标记本地笔记为已同步
+        localNotes.forEach(note => {
+          note.synced = true;
+          this.saveNote(note);
+        });
       }
 
       this.lastSyncTime = new Date();
@@ -149,6 +140,35 @@ export class SyncService {
       new Date()
     );
     return notes.some(note => !note.synced);
+  }
+
+  private async getOfflineQueue(): Promise<ApiTask[]> {
+    const queue = localStorage.getItem('offlineQueue');
+    return queue ? JSON.parse(queue) : [];
+  }
+
+  private async clearOfflineQueue() {
+    localStorage.removeItem('offlineQueue');
+  }
+
+  private async addToOfflineQueue(notes: any[]) {
+    const queue = await this.getOfflineQueue();
+    queue.push({
+      method: 'syncData',
+      args: [notes]
+    });
+    localStorage.setItem('offlineQueue', JSON.stringify(queue));
+  }
+
+  private async processSyncTask(task: ApiTask) {
+    try {
+      await apiService.syncData(task.args[0]);
+      await this.clearOfflineQueue();
+    } catch (error) {
+      console.error('同步失败:', error);
+      // 如果同步失败，将任务添加到离线队列
+      await this.addToOfflineQueue(task.args[0]);
+    }
   }
 }
 
