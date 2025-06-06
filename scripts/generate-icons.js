@@ -23,12 +23,22 @@ function generateSvgIcon(size, filename) {
 generateSvgIcon(192, 'pwa-192x192.svg');
 generateSvgIcon(512, 'pwa-512x512.svg');
 
-// 生成简单的截图 SVG
-const screenshot = `<?xml version="1.0" encoding="UTF-8"?>
+// 生成宽屏截图
+const wideScreenshot = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1024" height="768" viewBox="0 0 1024 768" xmlns="http://www.w3.org/2000/svg">
   <rect width="1024" height="768" fill="white"/>
   <text x="50%" y="50%" font-family="Arial" font-size="48px" fill="#1677ff" text-anchor="middle" dominant-baseline="middle">每日一句</text>
 </svg>`;
 
-fs.writeFileSync(path.join(publicDir, 'screenshot-wide.svg'), screenshot);
-console.log('screenshot-wide.svg generated'); 
+fs.writeFileSync(path.join(publicDir, 'screenshot-wide.svg'), wideScreenshot);
+console.log('screenshot-wide.svg generated');
+
+// 生成窄屏截图
+const narrowScreenshot = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="750" height="1334" viewBox="0 0 750 1334" xmlns="http://www.w3.org/2000/svg">
+  <rect width="750" height="1334" fill="white"/>
+  <text x="50%" y="50%" font-family="Arial" font-size="36px" fill="#1677ff" text-anchor="middle" dominant-baseline="middle">每日一句</text>
+</svg>`;
+
+fs.writeFileSync(path.join(publicDir, 'screenshot-narrow.svg'), narrowScreenshot);
+console.log('screenshot-narrow.svg generated'); 

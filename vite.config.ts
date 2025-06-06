@@ -44,6 +44,12 @@ export default defineConfig({
             sizes: '1024x768',
             type: 'image/svg+xml',
             form_factor: 'wide'
+          },
+          {
+            src: 'screenshot-narrow.svg',
+            sizes: '750x1334',
+            type: 'image/svg+xml',
+            form_factor: 'narrow'
           }
         ]
       },
