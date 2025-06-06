@@ -457,6 +457,40 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const { pathname } = location;
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      // 阻止 Chrome 67 及更早版本自动显示安装提示
+      e.preventDefault();
+      // 保存事件，以便稍后触发
+      setDeferredPrompt(e);
+      // 显示我们的自定义安装提示
+      setShowInstallPrompt(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+
+    // 显示安装提示
+    deferredPrompt.prompt();
+
+    // 等待用户响应
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+
+    // 无论用户是否安装，都清除提示
+    setDeferredPrompt(null);
+    setShowInstallPrompt(false);
+  };
 
   const tabs = [
     {
@@ -477,27 +511,45 @@ function App() {
   ];
 
   return (
-    <div className="app">
-      <div className="body">
-        <TransitionGroup>
-          <CSSTransition
-            key={pathname}
-            timeout={300}
-            classNames="fade"
-          >
-            <Routes>
-              <Route path="/" element={<OneSentence />} />
-              <Route path="/sync" element={<Sync />} />
-              <Route path="/partner" element={<Partner />} />
-            </Routes>
-          </CSSTransition>
-        </TransitionGroup>
+    <div className="app-container">
+      {showInstallPrompt && (
+        <div className="install-prompt">
+          <div className="install-prompt-content">
+            <h3>安装到桌面</h3>
+            <p>将此应用安装到您的设备上，以便快速访问</p>
+            <div className="install-prompt-buttons">
+              <button onClick={handleInstallClick} className="install-button">
+                安装
+              </button>
+              <button onClick={() => setShowInstallPrompt(false)} className="cancel-button">
+                稍后再说
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="app">
+        <div className="body">
+          <TransitionGroup>
+            <CSSTransition
+              key={pathname}
+              timeout={300}
+              classNames="fade"
+            >
+              <Routes>
+                <Route path="/" element={<OneSentence />} />
+                <Route path="/sync" element={<Sync />} />
+                <Route path="/partner" element={<Partner />} />
+              </Routes>
+            </CSSTransition>
+          </TransitionGroup>
+        </div>
+        <TabBar activeKey={pathname} onChange={value => navigate(value)}>
+          {tabs.map(item => (
+            <TabBar.Item key={item.key} icon={item.icon} title={item.title} />
+          ))}
+        </TabBar>
       </div>
-      <TabBar activeKey={pathname} onChange={value => navigate(value)}>
-        {tabs.map(item => (
-          <TabBar.Item key={item.key} icon={item.icon} title={item.title} />
-        ))}
-      </TabBar>
     </div>
   );
 }
