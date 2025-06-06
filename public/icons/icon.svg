@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="256" cy="256" r="256" fill="#1677ff"/>
+  
+  <!-- 文字 "日" -->
+  <text x="256" y="320" 
+        font-family="Arial, sans-serif" 
+        font-size="240" 
+        font-weight="bold" 
+        fill="white" 
+        text-anchor="middle">
+    日
+  </text>
+  
+  <!-- 装饰性圆点 -->
+  <circle cx="256" cy="120" r="40" fill="white" opacity="0.8"/>
+</svg> 

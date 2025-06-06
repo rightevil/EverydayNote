@@ -15,9 +15,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'EverydayNote',
-        short_name: 'EverydayNote',
-        description: '记录每一天的心情和故事',
+        name: '每日一句',
+        short_name: '每日一句',
+        description: '记录每日一句，让生活更有意义',
         theme_color: '#1677ff',
         background_color: '#ffffff',
         display: 'standalone',
@@ -26,16 +26,24 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'pwa-192x192.svg',
             sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any maskable'
+            type: 'image/svg+xml',
+            purpose: 'any'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'pwa-512x512.svg',
             sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
+            type: 'image/svg+xml',
+            purpose: 'any'
+          }
+        ],
+        screenshots: [
+          {
+            src: 'screenshot-wide.svg',
+            sizes: '1024x768',
+            type: 'image/svg+xml',
+            form_factor: 'wide'
           }
         ]
       },
